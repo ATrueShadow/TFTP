@@ -10,7 +10,7 @@ namespace TFTP.TFTPClient
             Console.WriteLine("Hello, World!");
             // test
             TFTPLogic.TFTPClient client = new(IPAddress.Parse("192.168.1.20"), 1069);
-            client.GetFile("bruh.txt");
+            client.GetFile("linuxmint-20.3-mate-64bit.iso");
         }
     }
 }
