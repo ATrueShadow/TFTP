@@ -114,7 +114,7 @@ namespace TFTP.TFTPLogic
                 }
 
                 // write to a file
-                file.Write(data);
+                file.Write(data[4..]);
 
                 // just a simple animation
                 Console.SetCursorPosition(0, Console.CursorTop);
@@ -146,7 +146,7 @@ namespace TFTP.TFTPLogic
                     .ToArray(), remoteEndPoint);
 
                     // if length isn't 516 bytes - that transmission is the last, so stop receiving.
-            } while (data.Length == 516);
+            } while (data.Length == 512);
             Console.WriteLine();
 
             // safely closing the socket and filestream
@@ -164,7 +164,8 @@ namespace TFTP.TFTPLogic
             }
 
             // opening a file
-            // FileStream file = File.OpenRead(Directory.GetCurrentDirectory() + "\\" + filename);
+            // i don't know why, but using filestream to read the file results in sending gibberish at the end of the file.
+            // it's like when eof is reached, filestream rewinds by ~500 bytes and keeps sending them another two times. i spent two days debugging that. fml.
             BinaryReader file = new(File.OpenRead(Directory.GetCurrentDirectory() + "\\" + filename));
 
             // opcode for write request
@@ -174,10 +175,9 @@ namespace TFTP.TFTPLogic
 
             // zero. again.
             byte[] zero = { 0 };
-            byte[] data = new byte[516]; // for sending data.
+            byte[] data = new byte[512]; // for sending data.
             byte[] reply; // for replies from the server
             byte[] blockNo = { 00, 00 }; // keeping number of blocks sent
-            int readBytes = 0; // keeping track of how much bytes are sent
 
             // opening a udp socket
             UdpClient udpClient = new(remoteEndPoint.Port);
@@ -234,22 +234,14 @@ namespace TFTP.TFTPLogic
                 
                 if (reply[1] == 4) // checking if the server sent their ack
                 {
-                    //if (reply[2..3].Equals(blockNo))
-                    //{
-                        // counting up number of blocks
-                        // ughhhhh.
-                        blockNo[1]++;
-                        if (blockNo[1] == byte.MinValue)
-                            blockNo[0]++;
-                    //}
-                    //else // rewind that shit if server isn't ready
-                    //{
-                    //    file.Position -= readBytes;
-                    //}
+                    // counting up number of blocks
+                    // ughhhhh.
+                    blockNo[1]++;
+                    if (blockNo[1] == byte.MinValue)
+                        blockNo[0]++;
 
-                    // reading the file (max 516 bytes)
-                    // TODO: why this shit skips 4 bytes every time a new block starts???? but wireshark shows everything??? tf??
-                    data = file.ReadBytes(516);
+                    // reading the file
+                    data = file.ReadBytes(512);
                     
                     // sending data packet. format: [ Opcode (2b) | Block No. (2b) ]
                     // oh wow, that shit again
@@ -259,8 +251,8 @@ namespace TFTP.TFTPLogic
                         .ToArray(), remoteEndPoint);
                 }
 
-                    // if we send less than 516 bytes of data - that's the last transmission
-            } while (data.Length == 516);
+                    // if we send less than 512 bytes of data - that's the last transmission
+            } while (data.Length == 512);
 
             // safely closing the socket and file
             udpClient.Close();
