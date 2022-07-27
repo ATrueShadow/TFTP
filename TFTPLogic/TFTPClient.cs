@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.IO;
 
 namespace TFTP.TFTPLogic
 {
@@ -145,8 +144,8 @@ namespace TFTP.TFTPLogic
                     .Concat(data[2..4])
                     .ToArray(), remoteEndPoint);
 
-                    // if length isn't 512 bytes - that transmission is the last, so stop receiving.
-            } while (data.Length == 512);
+                    // if length isn't 512 + 4 (because opcode and block no.) bytes - that transmission is the last, so stop receiving.
+            } while (data.Length == 516);
             Console.WriteLine();
 
             // safely closing the socket and filestream
