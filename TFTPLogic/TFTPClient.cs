@@ -115,6 +115,11 @@ namespace TFTP.TFTPLogic
                 // write to a file
                 file.Write(data[4..]);
 
+
+
+#if TEST
+                Console.WriteLine();
+#else // CursorTop throws an exception in tests, so if we are testing - animation isn't compiled
                 // just a simple animation
                 Console.SetCursorPosition(0, Console.CursorTop);
                 switch (data[3] % 46)
@@ -138,7 +143,7 @@ namespace TFTP.TFTPLogic
                         Console.Write($"Receiving {filename}...  [      ]");
                         break;
                 }
-                
+#endif
                 // sending ack. format: [ Opcode (2b) | Block no. (2b) ]
                 udpClient.Send(ACK
                     .Concat(data[2..4])
